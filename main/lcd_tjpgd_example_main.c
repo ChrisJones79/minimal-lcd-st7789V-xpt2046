@@ -97,6 +97,11 @@ static void display_pretty_colors(esp_lcd_panel_handle_t panel_handle)
     }
 }
 
+/*
+This code is used to power on a device. 
+It sets the direction of two pins (PWR_EN_PIN and PWR_ON_PIN) to output,
+and then sets the level of both pins to 1.
+*/
 static void power_on(void)
 {
     gpio_set_direction(PWR_EN_PIN, GPIO_MODE_OUTPUT);
