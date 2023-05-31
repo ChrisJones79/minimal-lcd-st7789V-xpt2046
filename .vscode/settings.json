@@ -8,6 +8,7 @@
   "files.associations": {
     "random.h": "c",
     "esp_random.h": "c",
-    "*.tcc": "c"
+    "*.tcc": "c",
+    "portable.h": "c"
   }
 }

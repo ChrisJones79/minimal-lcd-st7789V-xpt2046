@@ -83,9 +83,12 @@
 #define G_MID 0x20
 #define B_MID 0x10
 
-esp_lcd_panel_handle_t init_lcd(void)
+void init_lcd(esp_lcd_panel_io_handle_t *io_handle,
+              esp_lcd_panel_handle_t *panel_handle)
 {
-    // CHECK Power enable and on (set high or is pullup ok?) 
+    ESP_LOGI("init_lcd", "Initializing beginning...");
+
+    // Power enable and on pins
     gpio_set_direction(PWR_EN_PIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(PWR_ON_PIN, GPIO_MODE_OUTPUT);
 
@@ -115,8 +118,6 @@ esp_lcd_panel_handle_t init_lcd(void)
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     // Configure the lcd_panel interface
-    esp_lcd_panel_io_handle_t io_handle = NULL;
-
     esp_lcd_panel_io_spi_config_t io_config = {
         .dc_gpio_num = LCD_PIN_DC,
         .cs_gpio_num = LCD_PIN_CS,
@@ -129,16 +130,53 @@ esp_lcd_panel_handle_t init_lcd(void)
     };
 
     // Attach the LCD to the SPI bus
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST, &io_config, &io_handle));
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST, &io_config, io_handle));
 
-    esp_lcd_panel_handle_t panel_handle = NULL;
+    
     esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = LCD_PIN_RST,
         .rgb_endian = LCD_RGB_ENDIAN_RGB,
         .bits_per_pixel = 16,
     };
-    // Initialize the LCD configuration
-    ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, &panel_handle));
 
-    return panel_handle;
+    // Initialize the LCD configuration
+    ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(*io_handle, &panel_config, panel_handle));
+
+    // esp_lcd_panel_handle_t panel_handle = init_lcd();
+
+    ESP_LOGI("main", "LCD screen initialized.");
+
+    // Reset the display
+    esp_err_t err = esp_lcd_panel_reset(*panel_handle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("main", "esp_lcd_panel_reset failed: %s", esp_err_to_name(err));
+        abort();
+    }
+
+    // Initialize LCD panel
+    err = esp_lcd_panel_init(*panel_handle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("main", "esp_lcd_panel_init failed: %s", esp_err_to_name(err));
+        abort();
+    }
+
+    // Turn on the screen
+    err = esp_lcd_panel_disp_on_off(*panel_handle, true);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("main", "esp_lcd_panel_disp_on_off failed: %s", esp_err_to_name(err));
+        abort();
+    }
+
+    // Swap x and y axis (This sets the screen to landscape mode)
+    err = esp_lcd_panel_swap_xy(*panel_handle, true);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("main", "esp_lcd_panel_swap_xy failed: %s", esp_err_to_name(err));
+        abort();
+    }
+
+    ESP_LOGI("init_lcd", "Initialization complete.");
 }

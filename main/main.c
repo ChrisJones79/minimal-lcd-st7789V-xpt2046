@@ -7,10 +7,61 @@
 #include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/portable.h"
 #include "freertos/task.h"
 #include "esp_random.h"
 #include "pretty_effect.h"
 #include "main.h"
+
+/**
+ * @brief Static function declarations
+ *
+ *
+ */
+static void get_two_colors(uint16_t color[]);
+
+static uint16_t *s_blks[NUM_BLKS];
+
+static void random_4x3_blocks(esp_lcd_panel_handle_t panel_handle, uint8_t fps, uint8_t nframes);
+
+/**
+ * @brief The app_main function is the entry point of the program.
+ *
+ */
+void app_main(void)
+{
+    ESP_LOGD("main", "app_main");
+
+    // Initialize the lcd screen
+    esp_lcd_panel_io_handle_t io_handle = NULL;
+    esp_lcd_panel_handle_t panel_handle = NULL;
+
+    init_lcd(&io_handle, &panel_handle);
+
+    // Allocate memory for 4x3 blocks
+    for (int i = 0; i < NUM_BLKS; i++)
+    {
+        s_blks[i] = heap_caps_malloc(BLK_SIZE * BLK_SIZE * sizeof(uint16_t), MALLOC_CAP_DMA);
+        if (s_blks[i] == NULL)
+        {
+            ESP_LOGE("main", "heap_caps_malloc failed");
+            abort();
+        }
+    }
+    ESP_LOGI("main", "Memory allocated.");
+
+    // Start and rotate
+    while (1)
+    {
+        random_4x3_blocks(panel_handle, 30, 45);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+/**
+ * @brief Static function definitions
+ *
+ */
 
 /**
  * @brief The get_two_colors function takes a pointer to a 16-bit integer,
@@ -19,7 +70,6 @@
  * The get_two_colors function is called by the get_two_random_colors function, which is used to choose two random colors for the game.
  *
  */
-
 static void get_two_colors(uint16_t color[])
 {
     uint32_t rand_colors = esp_random();
@@ -27,7 +77,13 @@ static void get_two_colors(uint16_t color[])
     color[1] = rand_colors & 0xffff;
 }
 
-static uint16_t *s_blks[NUM_BLKS];
+/**
+ * @brief The random_4x3_blocks function takes a pointer to the lcd screen handle,
+ * the number of frames per second, and the number of frames to display.
+ * The function draws 4x3 blocks on the screen, grabbing two random colors at a time.
+ * The function then draws the blocks on the screen.
+ *
+ */
 static void random_4x3_blocks(esp_lcd_panel_handle_t panel_handle, uint8_t fps, uint8_t nframes)
 {
     uint16_t colors[2];
@@ -75,74 +131,4 @@ static void random_4x3_blocks(esp_lcd_panel_handle_t panel_handle, uint8_t fps, 
         }
     }
     vTaskDelay(pdMS_TO_TICKS(100));
-}
-
-void app_main(void)
-{
-    ESP_LOGD("main", "app_main");
-
-    // Initialize the lcd screen
-    esp_lcd_panel_handle_t panel_handle = init_lcd();
-
-    ESP_LOGI("main", "LCD screen initialized.");
-
-    // Reset the display
-    esp_err_t err = esp_lcd_panel_reset(panel_handle);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("main", "esp_lcd_panel_reset failed: %s", esp_err_to_name(err));
-        abort();
-    }
-
-    // Initialize LCD panel
-    err = esp_lcd_panel_init(panel_handle);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("main", "esp_lcd_panel_init failed: %s", esp_err_to_name(err));
-        abort();
-    }
-
-    // Turn on the screen
-    err = esp_lcd_panel_disp_on_off(panel_handle, true);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("main", "esp_lcd_panel_disp_on_off failed: %s", esp_err_to_name(err));
-        abort();
-    }
-
-    // Swap x and y axis (This sets the screen to landscape mode)
-    err = esp_lcd_panel_swap_xy(panel_handle, true);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("main", "esp_lcd_panel_swap_xy failed: %s", esp_err_to_name(err));
-        abort();
-    }
-
-    // Need to mirror the screen to display correctly
-    // err = esp_lcd_panel_set_gap(panel_handle, -20, 20);
-    // if (err != ESP_OK)
-    // {
-    //     ESP_LOGE("main", "esp_lcd_panel_set_gap failed: %s", esp_err_to_name(err));
-    //     abort();
-    // }
-
-    // Allocate memory for 4x3 blocks
-    for (int i = 0; i < NUM_BLKS; i++)
-    {
-        s_blks[i] = heap_caps_malloc(BLK_SIZE * BLK_SIZE * sizeof(uint16_t), MALLOC_CAP_DMA);
-        if (s_blks[i] == NULL)
-        {
-            ESP_LOGE("main", "heap_caps_malloc failed");
-            abort();
-        }
-    }
-
-    ESP_LOGI("main", "Memory allocated.");
-
-    // Start and rotate
-    while (1)
-    {
-        random_4x3_blocks(panel_handle, 30, 45);
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 }
