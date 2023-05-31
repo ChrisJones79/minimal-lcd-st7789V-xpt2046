@@ -1,5 +1,5 @@
 set(srcs "pretty_effect.c"
-    "lcd_tjpgd_example_main.c"
+    "main.c"
     "decode_image.c"
     )
 
