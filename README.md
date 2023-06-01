@@ -64,3 +64,8 @@ See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/l
 ## Troubleshooting
 
 For any technical queries, please open an [issue] (https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+
+## Additional Information
+[Espressif's Github](https://github.com/espressif)
+[Code of Conduct](./CODE_OF_CONDUCGT.md)
+[UNLINCENSE](./LICENSE)
