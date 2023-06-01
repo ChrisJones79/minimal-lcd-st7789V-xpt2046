@@ -67,5 +67,8 @@ For any technical queries, please open an [issue] (https://github.com/espressif/
 
 ## Additional Information
 [Espressif's Github](https://github.com/espressif)
+
 [Code of Conduct](./CODE_OF_CONDUCGT.md)
+
 [UNLINCENSE](./LICENSE)
+
